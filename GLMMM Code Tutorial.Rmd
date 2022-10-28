@@ -1,13 +1,14 @@
 ---
-title: "GLMMs for tthe Microbiome: Code Tutorial"
-author: "Amy Sweeny"
-date: "01/10/2022"
-output: html_document 
+title: "GLMMs for the Microbiome: Code Tutorial"
 knit: (function(input_file, encoding) {
-    out_dir <- 'docs';
+    out_dir <- '';
     rmarkdown::render(input_file,
       encoding=encoding,
       output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
+author: "Amy Sweeny"
+date: "01/10/2022"
+output: html_document 
+
 ---
 
 ```{r setup, include=FALSE}
