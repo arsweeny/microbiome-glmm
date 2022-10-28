@@ -2,11 +2,12 @@
 title: "GLMMs for tthe Microbiome: Code Tutorial"
 author: "Amy Sweeny"
 date: "01/10/2022"
-output: 
-  html_document: 
-    toc: true 
-    toc_depth: 2
-    toc_float: true
+output: html_document 
+knit: (function(input_file, encoding) {
+    out_dir <- 'docs';
+    rmarkdown::render(input_file,
+      encoding=encoding,
+      output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
 ```{r setup, include=FALSE}
