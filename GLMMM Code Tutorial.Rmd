@@ -1,11 +1,11 @@
 ---
 title: "GLMMs for the Microbiome: Code Tutorial"
-output: 
-html_document: 
-  toc: true
-  toc_depth: 2
+output:
+  html_document:
+    toc: true
+    toc_float: true
 knit: (function(input_file, encoding) {
-    out_dir <- '';
+    out_dir <- 'docs';
     rmarkdown::render(input_file,
       encoding=encoding,
       output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
@@ -26,7 +26,7 @@ This is a tutorial illustrating the methods presented in Sweeny et al. 2020 (htt
 
 We provide an outline of applying generalised linear mixed-effects models to relative abundance tables of metabarcoding data as a means to account for complex covariates that are present in wildlife microbiota datasets. The below from the preprint illustrates the model formulation and output. 
 
-```{r schematic, echo=FALSE, fig.width=4, fig.height=6}
+```{r schematic, echo=FALSE, fig.width=3, fig.height=5}
 knitr::include_graphics("Figures/Microbiome Mixed Model Schematic.png")
 ```
 
@@ -72,6 +72,8 @@ AmyTheme <- theme_bw(base_size=14) +
     axis.title = element_text(colour="black"),
     axis.title.x = element_text(angle=45, hjust=1) 
   )
+
+Mods <- list() # Model list for later 
 
 ```
 
@@ -234,8 +236,6 @@ Mixed models here will all be carried out in MCMCglmm, but your favourite packag
 * read abundance as response 
 * fixed effects should be relevant host factors that may affect sample variation in read abundance - in  this instance samples were collected from adults and lambs to examine effects of age on the gut microbiome 
 ```{r mcmc poisson setup}
-Mods <- list()
-
 mf <- 20 # multiplier for model iterations and chains 
 resp<-"abundance" 
 fixed<- c("age_class") 
@@ -249,6 +249,7 @@ Prior3 <- list(R = list(V = diag(1), nu = 0.002),
 
 ```
 
+### Run model 
 You can run the model below, or read in the model object which was run from the code! 
 ```{r Poisson model, eval=FALSE}
 # to run the model 
@@ -274,6 +275,7 @@ Read in the model object here if you didn't run the above
 Mods[[1]] <- readRDS("Output/PoissonModel.rds")
 ```
 
+### Poisson results
 
 View proportion variance associated with each random term 
 ```{r poisson results} 
@@ -284,14 +286,16 @@ PropVarPois <- MCMCRep(Mods[[1]], scale="link") %>% # function from ggregplot to
 PropVarPois
 ```
 
-
-Variance components often will not add to 1 because there is some variance attributable to the poisson process. We'll calculate that and visualise the variance breakdown for this model. 
+Variance components will not add to 1 here because there is some variance attributable to the poisson process. We'll calculate that and visualise the variance breakdown for this model. 
 
 ```{r poisson prop var fig, fig.width = 4}
 PropVarPois %>% pull(Mode) %>% sum -> TotalVar 
 1- TotalVar -> PoissonVar 
 
 PropVarPois[5, ] <- c("poisson", PoissonVar, NA, NA) 
+
+PropVarPois %<>% 
+  mutate_at(c("Mode", "lHPD", "uHPD"), as.numeric)
 
 PropVarPois%>% 
   mutate(Component=fct_relevel(Component, "age_class:asv", "asv", "sample","poisson", "units")) %>% 
@@ -306,6 +310,8 @@ PropVarPois%>%
         legend.title = element_text(size=12)) + 
   labs(x='Poisson model', y='Proportion Variance')
 ```
+
+
 # 3. Differential abunance analysis 
 
 * We can use model outputs to explore which specific taxa are driving differential abundances between groups of interests (e.g. age), which is commonly of great interest in microbiome studies
@@ -626,6 +632,8 @@ Prior2 <- list(R = list(V = diag(1), nu = 0.002),
 
 ```
 
+### CLR run model 
+
 ```{r gaussian model, eval=FALSE}
 Mods[[2]] <-MCMCglmm(clr~ 1,
                   random=~ age_class:asv + asv, # note sample does not need to be included here 
@@ -646,6 +654,7 @@ Read in the model object here if you didn't run the above
 Mods[[2]] <- readRDS("Output/GaussianModel.rds")
 ```
 
+### CLR results
 
 ```{r gaussian results} 
 PropVarCLR <- MCMCRep(Mods[[2]]) %>% 
@@ -655,7 +664,28 @@ PropVarCLR <- MCMCRep(Mods[[2]]) %>%
 PropVarCLR[3,1] <- "mev"
 ```
 
-We can compare these variance components to the those of the Poisson model and se 
+We can compare these variance components to the those of the Poisson model and see how well they match. 
+
+We can see below that the variation in community composition associated with age class is about 20% in each model. 
+```{r both models prop var, fig.width=8}
+
+PropVarAll <- bind_rows(PropVarPois %>% 
+                          mutate(Model="Poisson"), 
+                        PropVarCLR %>% 
+                          mutate(Model="Gaussian")) 
+
+PropVarAll%>% 
+  mutate(Component=fct_relevel(Component, "age_class:asv", "asv", "sample","poisson", "mev", "units")) %>% 
+  ggplot(aes(x=Model, y=as.numeric(Mode), fill=Component)) + 
+  geom_bar(stat="identity", colour="transparent") + 
+  scale_fill_manual(values=MicroColours[c(2,4,6,8,10,12)]) +
+  theme_bw(base_size = 14) + 
+  #theme(legend.position = "top") + 
+  theme_bw(base_size = 14) + 
+  labs(x='Model', y='Proportion Variance')
+
+```
+
 
 ## 4B. Hierarchical Taxonomic Effects
 
@@ -665,3 +695,82 @@ We can compare these variance components to the those of the Poisson model and s
 * Here we show an alternative to the Poisson model above which considers additional taxonomic levels (ASV, family, phylum) as an example of one approach. 
 * We note that this nested taxonomic effects approach is not the only way, and that fitting a phylogenetic tree in the random effects structure offers an additional option which explictly accounts for phylogenetic distance. 
 
+### Nested taxonomy model set-up
+```{r mcmc taxa setup}
+mf <- 20 # multiplier for model iterations and chains 
+
+Prior9 <- list(R = list(V = diag(1), nu = 0.002),
+               G = list(G1 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G2 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G3 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G4 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G5 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G6 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G7 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100), 
+                        G8 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100),
+                        G9 = list(V = diag(1), nu = 0.002, alpha.mu = rep(0,1), alpha.V = diag(1)*100))) 
+
+```
+
+### Nested taxonomy run model 
+
+```{r mcmc taxa run model, eval=FALSE}
+Mods[[3]]<- MCMCglmm(fixed= mcmcF, 
+                          random= ~ sample + asv + age_class:asv +  
+                            phylum + phylum:sample + age_class:phylum + 
+                            fam + fam:sample + age_class:fam, 
+                          prior=Prior9,
+                          data=df,
+                          verbose=T, pr=F, pl=F, # will save posteriors for random effect levels & model predictions for each iteration 
+                          family = "poisson",
+                          nitt = 13000*mf,
+                          thin = 10*mf,burnin=3000*mf) # start 1550 
+
+```
+
+
+Read in the model object here if you didn't run the above 
+```{r Taxonomy model object}
+Mods[[3]] <- readRDS("Output/TaxonomyModel.rds")
+```
+
+### Taxonomy results 
+
+View proportion variance breakdown with added taxonomic levels 
+
+```{r nested taxa results} 
+PropVarTaxa <- MCMCRep(Mods[[3]], scale="link") %>% # function from ggregplot to calculate proportion variance for each random effect 
+  as.data.frame() %>% 
+  mutate_at(c("Mode", "lHPD", "uHPD"), as.numeric)
+
+PropVarTaxa
+```
+
+Variance components will not add to 1 here because there is some variance attributable to the poisson process. We'll calculate that and visualise the variance breakdown for this model. 
+
+```{r nested taxa prop var fig, fig.width = 4}
+PropVarTaxa %>% pull(Mode) %>% sum -> TotalVar 
+1- TotalVar -> TaxasonVar 
+
+PropVarTaxa[11, ] <- c("poisson", TaxasonVar, NA, NA) 
+
+PropVarTaxa %<>% 
+  mutate_at(c("Mode", "lHPD", "uHPD"), as.numeric)
+
+PropVarTaxa  %>% 
+  ggplot(aes(x=1, y=as.numeric(Mode), fill=Component)) + 
+  geom_bar(stat="identity", colour="transparent") + 
+  scale_x_continuous(labels=NULL) + 
+  scale_fill_manual(values=MicroColours) +
+  theme_bw(base_size = 14) + 
+  #theme(legend.position = "top") + 
+  theme(axis.ticks.x = element_blank(), 
+        legend.text = element_text(size=11), 
+        legend.title = element_text(size=12)) + 
+  labs(x='Nested taxonomy model', y='Proportion Variance')
+```
+
+Most variance is coming from the asv level (age_class:asv), followed by the family (age_class:fam) and finally the phylum (age_class:phylum) level. You can visualise the output of this model following code in part 3 of this tutorial to create a plot comparable to Figure S4 in this manuscript. 
+
+
+# 5 Testing model predictions - excess zeroes 
