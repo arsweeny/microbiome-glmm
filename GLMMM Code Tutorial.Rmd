@@ -335,7 +335,7 @@ SolutionsAdult <- SolutionsAge %>%
   separate(level, into=c("term", "age_class", "asv"), sep="[.]")
 ```
 
-Here's a function I wrote that you can apply to posterior distributions for each ASV in both age groups to calculate differences between groups (see Section xxx)
+Here's a function I wrote that you can apply to posterior distributions for each ASV in both age groups to calculate differences between groups (see Sections 2 & 3 in manuscript)
 ```{r key taxa function}
 RanefPostComp<- function(df, comps, taxa, var){
   require(tidyverse)
@@ -771,6 +771,3 @@ PropVarTaxa  %>%
 ```
 
 Most variance is coming from the asv level (age_class:asv), followed by the family (age_class:fam) and finally the phylum (age_class:phylum) level. You can visualise the output of this model following code in part 3 of this tutorial to create a plot comparable to Figure S4 in this manuscript. 
-
-
-# 5 Testing model predictions - excess zeroes 

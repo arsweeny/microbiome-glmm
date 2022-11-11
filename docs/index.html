@@ -647,7 +647,7 @@ SolutionsAge&lt;- SolutionsDF %&gt;% dplyr::select(SolKeepAge)
 SolutionsAdult &lt;- SolutionsAge %&gt;% 
   gather(key=&quot;level&quot;, value=&quot;posterior&quot;) %&gt;% as.data.frame() %&gt;% 
   separate(level, into=c(&quot;term&quot;, &quot;age_class&quot;, &quot;asv&quot;), sep=&quot;[.]&quot;)</code></pre>
-<p>Here’s a function I wrote that you can apply to posterior distributions for each ASV in both age groups to calculate differences between groups (see Section xxx)</p>
+<p>Here’s a function I wrote that you can apply to posterior distributions for each ASV in both age groups to calculate differences between groups (see Sections 2 &amp; 3 in manuscript)</p>
 <pre class="r"><code>RanefPostComp&lt;- function(df, comps, taxa, var){
   require(tidyverse)
   require(MCMCglmm)
@@ -1032,9 +1032,6 @@ PropVarTaxa  %&gt;%
 <p>Most variance is coming from the asv level (age_class:asv), followed by the family (age_class:fam) and finally the phylum (age_class:phylum) level. You can visualise the output of this model following code in part 3 of this tutorial to create a plot comparable to Figure S4 in this manuscript.</p>
 </div>
 </div>
-</div>
-<div id="testing-model-predictions---excess-zeroes" class="section level1">
-<h1>5 Testing model predictions - excess zeroes</h1>
 </div>
 
 
