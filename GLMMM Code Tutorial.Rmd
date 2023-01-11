@@ -31,7 +31,7 @@ knitr::include_graphics("Figures/Microbiome Mixed Model Schematic.png")
 ```
 
 
-For computing efficiency, an anonymised subset of one of the pilot datasets used in the companion manuscript is used in this tutorial and can be downloaded in the 'Data' folder on github. 
+For computing efficiency, an anonymised subset of one of the pilot datasets used in the companion manuscript is used in this tutorial and can be downloaded from the 'Data' folder on github. 
 
 
 # 0. Set-up 
@@ -92,7 +92,7 @@ ps <- readRDS(paste0(path,"PhyloseqGLMM.rds")) # phyloseq object
 ## Explore the dataset 
 
 ### Summarise phyloseq object 
-This data was previously filtered for a total abundance of 250 reads, so we have no singletons and a total of 794 ASVs and 30 samples we will proceed with. 
+This data was previously filtered to includes ASVs with a total abundance of 250 reads, so we have no singletons and a total of 794 ASVs and 30 samples we will proceed with. 
 ```{r data exploration}
 ps 
 summarize_phyloseq(ps) 
@@ -250,7 +250,7 @@ Prior3 <- list(R = list(V = diag(1), nu = 0.002),
 ```
 
 ### Run model 
-You can run the model below, or read in the model object which was run from the code! 
+
 ```{r Poisson model, eval=FALSE}
 # to run the model 
 Mods[[1]]<- MCMCglmm(fixed= mcmcF, 
@@ -270,8 +270,7 @@ Notes:
 * Note this did take my laptop ~ 90 minutes to run, so not a fast model! 
 
 
-Read in the model object here if you didn't run the above 
-```{r Poisson model object}
+```{r Poisson model object, include=FALSE}
 Mods[[1]] <- readRDS("Output/PoissonModel.rds")
 ```
 
@@ -391,8 +390,7 @@ ASVByAge <- RanefPostComp(SolutionsAdult,
 rm(var) # to avoid conflict later with another function 
 ```
 
-Or read in here: 
-```{r key taxa results}
+```{r key taxa results, include=FALSE}
 ASVByAge <- read_csv("Output/ASVbyAge.csv")
 ```
 
@@ -643,14 +641,13 @@ Mods[[2]] <-MCMCglmm(clr~ 1,
                   verbose=T, 
                   pr=F, pl=F, 
                   nitt= 13000*mf, 
-                  thin=10*mf, burnin=3000*mf) # start time 1714 finish 
+                  thin=10*mf, burnin=3000*mf) 
 ```
 Notes: 
 * this also takes a fair bit of time (~40 min for me) but will be more efficient for more complex random effect structures 
 * pr & pl are set to F for the purposes of this tutorial, but if you want the posteriors/ predictions saved, set to T 
 
-Read in the model object here if you didn't run the above 
-```{r gaussian model object}
+```{r gaussian model object, include=FALSE}
 Mods[[2]] <- readRDS("Output/GaussianModel.rds")
 ```
 
@@ -724,13 +721,11 @@ Mods[[3]]<- MCMCglmm(fixed= mcmcF,
                           verbose=T, pr=F, pl=F, # will save posteriors for random effect levels & model predictions for each iteration 
                           family = "poisson",
                           nitt = 13000*mf,
-                          thin = 10*mf,burnin=3000*mf) # start 1550 
-
+                          thin = 10*mf,burnin=3000*mf) 
 ```
 
 
-Read in the model object here if you didn't run the above 
-```{r Taxonomy model object}
+```{r Taxonomy model object, include=FALSE}
 Mods[[3]] <- readRDS("Output/TaxonomyModel.rds")
 ```
 
