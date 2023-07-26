@@ -10,7 +10,7 @@ knit: (function(input_file, encoding) {
       encoding=encoding,
       output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "Amy Sweeny"
-date: "01/10/2022"
+date: "25/07/2023"
 
 ---
 
@@ -22,16 +22,16 @@ knitr::opts_chunk$set(echo = TRUE,
 
 # Applying GLMMs to wild metabarcoding data 
 
-This is a tutorial illustrating the methods presented in Sweeny et al. 2020 (https://www.biorxiv.org/content/10.1101/2020.11.24.395715v2.full)
+This is a tutorial illustrating the methods presented in Sweeny et al. 2023 (https://journals.asm.org/doi/10.1128/msystems.00040-23)
 
-We provide an outline of applying generalised linear mixed-effects models to relative abundance tables of metabarcoding data as a means to account for complex covariates that are present in wildlife microbiota datasets. The below from the preprint illustrates the model formulation and output. 
+We provide an outline of applying generalised linear mixed-effects models to relative abundance tables of metabarcoding data as a means to account for complex covariates that are present in wildlife microbiota datasets. The below from the manuscript illustrates the model formulation and output. 
 
 ```{r schematic, echo=FALSE, fig.width=3, fig.height=5}
 knitr::include_graphics("Figures/Microbiome Mixed Model Schematic.png")
 ```
 
 
-For computing efficiency, an anonymised subset of one of the pilot datasets used in the companion manuscript is used in this tutorial and can be downloaded from the 'Data' folder on github. 
+For computing efficiency, an anonymised subset of one of the pilot datasets used in the companion manuscript is used in this tutorial and can be downloaded from the 'Data' folder on github (https://github.com/arsweeny/microbiome-glmm/tree/main/Data) 
 
 
 # 0. Set-up 
